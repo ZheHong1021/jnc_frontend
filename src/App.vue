@@ -1,30 +1,39 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </nav>
-  <router-view/>
+
+  <v-app id="inspire">
+    <!-- 側邊欄 -->
+    <v-navigation-drawer v-model="drawer">
+      <Navigation />
+    </v-navigation-drawer>
+
+    <!-- 頂端 -->
+    <v-app-bar>
+      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
+
+      <!-- Bar Title -->
+      <v-app-bar-title class="font-weight-black">{{app_name}}</v-app-bar-title>
+    </v-app-bar>
+
+    <!-- 主頁面 -->
+    <v-main>
+      <router-view/>
+    </v-main>
+  </v-app>
 </template>
 
-<style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
 
-nav {
-  padding: 30px;
-
-  a {
-    font-weight: bold;
-    color: #2c3e50;
-
-    &.router-link-exact-active {
-      color: #42b983;
+<script>
+import Navigation from "@/components/Navigation.vue"
+  export default {
+    name: 'Navigation',
+    components: {
+      Navigation
     }
   }
-}
-</style>
+</script>
+
+<script setup>
+  import { ref } from 'vue'
+  const drawer = ref(null)
+  const app_name = ref("JNC 監測系統")
+</script>
