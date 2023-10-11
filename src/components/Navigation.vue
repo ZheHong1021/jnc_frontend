@@ -12,9 +12,10 @@
           <v-divider></v-divider>
 
           <v-list nav>
+              <!-- Prefix + Icon (Material Design ICON) -->
               <v-list-item link
                 v-for="route in routes" :key="route['title']"
-                :prepend-icon="route['icon']"
+                :prepend-icon="icon_prefix + '-' + route['icon']"
                 :title="route['title']"
                 :to="route['link']"
                 active-class="bg-primary white--text font-weight-black"
@@ -32,11 +33,14 @@
 
 <script setup>
 import { ref } from 'vue'
-  // script setup logic
-
-  const routes = ref([
-    { title: '首頁', icon: 'mdi-inbox-arrow-down', link: '/' },
-    { title: '測試頁面', icon: 'mdi-send', link: '/direction' },
   
+  // 前綴
+  const icon_prefix = ref('mdi')
+
+  // 路由列表 (標題內容、圖案、連結)
+  const routes = ref([
+    { title: '首頁', icon: 'inbox-arrow-down', link: '/' },
+    { title: '區域列表', icon: 'office-building-marker', link: '/jnc-position' },
+    { title: '測試頁面', icon: 'send', link: '/direction' },
   ])
 </script>

@@ -6,12 +6,24 @@ function loadView(view) {
 }
 
 const routes = [
-  {
+  { // 首頁
     path: '/',
     name: 'home',
     component: loadView("Home"),
   },
-  {
+  { // 區域列表
+    path: '/jnc-position',
+    name: 'JNCPosition',
+    component: loadView("JNC/JNCPosition"),
+  },
+  { // 設備列表
+    path: '/jnc-position/:id/devices',
+    name: 'JNCDevice',
+    component: loadView("JNC/JNCDevice"),
+  },
+
+  
+  { // 測試
     path: '/direction',
     name: 'Direction',
     component: loadView("Direction"),

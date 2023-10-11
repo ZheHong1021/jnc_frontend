@@ -37,3 +37,14 @@ import Navigation from "@/components/Navigation.vue"
   const drawer = ref(null)
   const app_name = ref("JNC 監測系統")
 </script>
+
+
+
+<style>
+
+
+  .pointer{ /* 點擊按鈕變換(通常都會使用到) => 放置在全域 */
+    cursor: pointer;
+  }
+
+</style>
