@@ -11,13 +11,14 @@
 
           <v-divider></v-divider>
 
-          <v-list nav>
+          <v-list>
               <!-- Prefix + Icon (Material Design ICON) -->
-              <v-list-item link
+              <v-list-item link nav
                 v-for="route in routes" :key="route['title']"
                 :prepend-icon="icon_prefix + '-' + route['icon']"
                 :title="route['title']"
-                :to="route['link']"
+                :to="{name: route['routeName']}"
+                :value="route['routeName']"
                 active-class="bg-primary white--text font-weight-black"
               ></v-list-item>
           </v-list>
@@ -39,8 +40,8 @@ import { ref } from 'vue'
 
   // 路由列表 (標題內容、圖案、連結)
   const routes = ref([
-    { title: '首頁', icon: 'inbox-arrow-down', link: '/' },
-    { title: '區域列表', icon: 'office-building-marker', link: '/jnc-position' },
-    { title: '測試頁面', icon: 'send', link: '/direction' },
+    { title: '首頁', icon: 'inbox-arrow-down', routeName: 'home' },
+    { title: '區域列表', icon: 'office-building-marker', routeName: 'JNCPosition' },
+    { title: '測試頁面', icon: 'send', routeName: 'Direction' },
   ])
 </script>

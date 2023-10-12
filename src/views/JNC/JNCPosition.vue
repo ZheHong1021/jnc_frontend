@@ -11,7 +11,7 @@
           <v-skeleton-loader
               :loading="position_loading"
               height="180"
-              type="card">
+              type="image">
               <v-hover>
                 <template v-slot:default="{ isHovering, props }">
                     <v-card v-bind="props" :color="isHovering ? 'blue-accent-2' : 'indigo'" 
