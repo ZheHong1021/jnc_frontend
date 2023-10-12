@@ -1,7 +1,6 @@
 <template>
   <v-container>
     <v-btn @click="resetZoom" color="primary" variant="tonal">reset zoom</v-btn>
-    
     <div style="width: 100%; min-height: 650px;" >
         <canvas id="chart_id"  ref="chart_ref" ></canvas>
     </div>
@@ -18,15 +17,13 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels'; // 資料標籤
 import zoomPlugin from 'chartjs-plugin-zoom'; // Zoom: 放大/縮小
+
 Chart.register(ChartDataLabels)
 Chart.register(zoomPlugin)
 
 import 'chartjs-adapter-date-fns'; // 引入時間處理
 import {zhTW} from 'date-fns/locale'; // import date-fns locale:
-
-// 自定義好用套裝工具
-import {staticLabelUtil, hoverLabelUtil} from '@/utility/Utils.js'
-
+import dayjs from 'dayjs';
 export default {
   name: 'InspectChart',
   props: {
@@ -100,9 +97,6 @@ export default {
                 },
             },
             zoom: { // 『chartjs-plugin-zoom』套件引用
-                limits: { // 限制原本Zoom為上下限
-                    x: {min: 'original', max: 'original'}
-                },
                 zoom: { // 縮放功能
                     wheel: {
                         enabled: true,
@@ -116,11 +110,16 @@ export default {
                     enabled: true,
                     mode: 'x',
                 },
+
             },
+
+
+
         },
 
         scales:{ // Scales
-            x: { // X軸 (小時)
+            x : { // X軸
+                offset: true, // 當X軸內容超出容器時，可以校正回來
                 title: {
                     display: true,
                     text: '時間',
@@ -129,69 +128,68 @@ export default {
                         weight: 'bolder'
                     },
                 },
+
                 adapters: { // date-fns locale
                     date: {
                         locale: zhTW
                     }
                 },
-
+                
                 type: 'time',
                 time: {
                     unit: 'hour',
                     displayFormats: {
-                        'hour': 'aa hh:mm' // y: 年份； M: 月份 ； d: 天
-                        // 'hour': 'HH:mm' // y: 年份； M: 月份 ； d: 天
-                        // 'hour': 'aa H 時' // y: 年份； M: 月份 ； d: 天
+                        'hour': 'aa h:mm' // y: 年份； M: 月份 ； d: 天
                     }
+                    // unit: 'day',
+                    // displayFormats: {
+                    //     'day': 'yyyy-MM-dd' // y: 年份； M: 月份 ； d: 天
+                    // }
                 },
+
                 // 格線
                 grid: { // 取消格線(圖表中)
                     display: false
                 }, 
+                
+                // tick(跳動點)
                 ticks: {
-                    font: { size: '14px'},
-                    color: 'grey',
-                }
-            },
+                    major: { // 有一個主要的群組(Day)
+                        enabled: true,
+                    },
+                  
+                    font: (context)=>{ // 字型樣式處理(透過 Func來去取得不一樣的結果)
+                        if( !context.tick ) return undefined
+                        const { major } = context['tick'] // 取出 tick資訊 (需要查找 major屬性是否為 true)
 
-            x2: { // X軸 (日期)
-                position: 'top',
-                type: 'time',
-                time: {
-                    unit: 'day',
-                    displayFormats: {
-                        'day': 'yyyy-MM-dd' // y: 年份； M: 月份 ； d: 天
+                        const majorStyle = {
+                            size: '18px', // 字型大小
+                            weight: 'bold', // 字體粗體
+                        }
+                        const generalStyle = {
+                            size: '14px', // 字型大小
+                        }
+                        return major ? majorStyle : generalStyle
+                    },
+
+                    color: (context) => {  // 文字顏色處理(透過 Func來去取得不一樣的結果)
+                        if( !context.tick ) return undefined
+                        const { major } = context['tick'] // 取出 tick資訊 (需要查找 major屬性是否為 true)
+                        return major ? 'blue' : 'grey'
+                    },
+
+                    callback: (value, index, ticks)=>{ // 用於顯示 tick的內容
+                        const tick = ticks[index] // tick資訊(major、value)
+                        return tick['major'] 
+                                ? dayjs(tick['value']).format("M月D日")
+                                : value; // callback帶入參數: value (原生label)
                     }
                 },
-                ticks: {
-                    font: {
-                        size: '20px',
-                        weight: 'bold',
-                    },
-                    color: 'rgba(83, 82, 237,1.0)',
-                },
 
-                // 格線
-                grid: { // 取消格線(圖表中)
-                    /* 邊框線 */
-                    borderColor: 'rgba(83, 92, 104, 0.7)',
-                    borderWidth: 3,
 
-                    /* 突出線 */
-                    tickWidth: 3, 
-                    tickColor: 'rgba(83, 92, 104, 0.7)',
-                    tickLength: 20,
-
-                    /* 圖表格線 */
-                    lineWidth: 2,
-                },
-
-                
             },
-
             y: { // Y軸(餵食量(g))
                 display: true,
-                position: 'right',
                 title: { 
                     display: true,
                     text: '酸鹼度',
@@ -205,11 +203,8 @@ export default {
                     font: {
                         size: '14px', // 字型大小
                     },
-                },
-                max: 6.65,
-                min: 6.4
+                }
             },
-            
         } 
     })
     
@@ -258,15 +253,44 @@ export default {
         return options
     })
 
+    const backgroundColorRange = {
+        id: 'backgroundColorRange',
+        afterDatasetsDraw(chart, args, pluginOptions){
+            const {
+                ctx, 
+                chartArea: {top, bottom, left, right, width, height},
+                scales: {x, y}
+            } = chart
+
+            const ticks = x.getTicks()
+            const majorTicks = ticks.filter((tick) => tick.major);
+            
+            ctx.save()
+
+            
+            for(let i = 0 ; i < majorTicks.length - 1; i++){
+                const tick = majorTicks[i]
+                const next_tick = majorTicks[i+1]
+                const pixel = x.getPixelForValue( tick.value ) // 透過 value得到 pixel
+                const next_pixel = x.getPixelForValue( next_tick.value ) // 透過 value得到 pixel
+                if (i % 2 === 0){
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
+                    // (x[pixel], y, width, height)
+                    ctx.fillRect(pixel, top, next_pixel, height);
+                }
+            }
+            ctx.restore();
+        }
+    }
+   
+    
+    
     const CreateCharts = ()=>{ // 新增Chart
         const config = {
             type: 'line',
             data: chartData.value,
             options: options.value,
-            plugins: [
-                staticLabelUtil,
-                hoverLabelUtil,
-            ]
+            plugins: [backgroundColorRange],
         }
         const ctx = chart_ref.value
         if( !Chart.getChart(ctx) ){ // 沒有圖表Instance再新增
@@ -274,10 +298,6 @@ export default {
         }
     }
 
-    
-    
-
-    // 回到最一開始的圖表範圍
     const resetZoom = ()=>{
         const chart = Chart.getChart(chart_ref.value)
         if(chart){

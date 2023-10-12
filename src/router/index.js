@@ -14,11 +14,7 @@ const routes = [
     name: 'home',
     component: loadView("Home"),
   },
-  { // 區域列表
-    path: '/jnc-position',
-    name: 'JNCPosition',
-    component: loadView("JNC/JNCPosition"),
-  },
+
 
   // https://stackoverflow.com/questions/67375247/vue-3-router-router-link-active-not-working
   {

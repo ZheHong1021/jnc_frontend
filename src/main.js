@@ -19,11 +19,11 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 app.use(VueSweetalert2);
 
 // 【發布 - Production】
-app.config.productionTip = true // true: 線上發布 / false: 測試
-app.config.devtools = false // true: 開啟Devtool / false: 關閉devtool
+// app.config.productionTip = true // true: 線上發布 / false: 測試
+// app.config.devtools = false // true: 開啟Devtool / false: 關閉devtool
 
 // 【測試 - Development】
-// app.config.productionTip = false // true: 線上發布 / false: 測試
-// app.config.devtools = true // true: 開啟Devtool / false: 關閉devtool
+app.config.productionTip = false // true: 線上發布 / false: 測試
+app.config.devtools = true // true: 開啟Devtool / false: 關閉devtool
 
 app.mount('#app')
