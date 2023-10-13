@@ -1,10 +1,21 @@
 <template>
   <v-container>
-      <h6 class="text-h6 text-md-h5 font-weight-black">
-        <v-icon icon="mdi-robot-vacuum" color="brown darken-2"></v-icon>
-        <!-- 設備列表 ({{position_id}}) -->
-        {{position['DeviceName']}} 
-      </h6>
+
+      <div class="d-flex">
+        <h6 class="text-h6 text-md-h5 font-weight-black">
+          <v-icon icon="mdi-robot-vacuum" color="brown darken-2"></v-icon>
+          <!-- 設備列表 ({{position_id}}) -->
+          {{position['DeviceName']}} 
+        </h6>
+
+        <v-spacer></v-spacer>
+        <v-btn variant="flat" color="grey" class="font-weight-black"
+          @click="$router.go(-1)">
+          回上一頁
+        </v-btn>
+      </div>
+
+
       <p class="text-subtitle-1 font-weight-black text-blue">
         檢測項目: {{ position['inspect_num']}}
       </p>
@@ -17,22 +28,72 @@
             label="選擇檢測項目"
             :items="position['inspects']"
             item-title="TagName"
-            item-value="TagName"
+            item-value="id"
             multiple
             variant="solo-filled"
             prepend-inner-icon="mdi-fan-auto">
             <!-- Selection Display -->
             <template v-slot:selection="{ item, index }">
-                <div :class="is_mobile ? 'mt-1' : 'mt-2'">
-                    <v-chip v-if="index < 3" color="primary" class="font-weight-black">
+                <div class="mt-2">
+                    <v-chip v-if="index < 2" color="primary" class="font-weight-black">
                         <!-- item-title -->
                         {{ item['title'] }}
                     </v-chip>
-                    <span v-if="index === 3" >
-                        (+{{ selected.length - 3 }} others)
+                    <span v-if="index === 2" >
+                        (+{{ selected.length - 2 }} others)
                     </span>
                 </div>
             </template>
+
+            <!-- Select All -->
+            <template v-slot:prepend-item>
+                <!-- 數量 -->
+                <v-list-item>
+                  <!-- prepend -->
+                  <template v-slot:prepend>
+                    <v-avatar color="amber-lighten-3">
+                      <v-icon icon="mdi-monitor-dashboard" color="indigo"></v-icon>
+                    </v-avatar>
+                  </template>
+
+                  <!-- title -->
+                  <template v-slot:title>
+                    <h6 class="font-weight-black text-subtitle-1">檢測項目 <strong class="text-red">(限選5個)</strong></h6>
+                  </template>
+
+                  <!-- Subtitle -->
+                  <template v-slot:subtitle>
+                    <div class="d-flex flex-wrap" style="gap: 0.5rem;">
+                      <v-chip rounded small color="success" variant="tonal">
+                        已選: {{ selected.length }}
+                      </v-chip>
+                      <v-chip rounded small color="deep-orange-darken-1" variant="tonal">
+                        總共: {{ position['inspects'].length }}
+                      </v-chip>
+                    </div>
+                  </template>
+                  
+                </v-list-item>
+                <v-divider class="mt-2"></v-divider>
+            </template>
+
+            <!-- Selected Item -->
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props" :disabled="selected.length >= 5 && !selected.includes(props.value)">
+              <!-- <v-list-item v-bind="props" > -->
+                <template v-slot:prepend="{isActive}">
+                    <!-- 原生資料 -->
+                    <!-- {{item.raw}} -->
+
+                    <v-icon x-small
+                      :icon="isActive ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline'"
+                      :color="isActive ? 'green' : 'red-accent-3'">
+                    </v-icon>
+                </template>
+              </v-list-item>
+                
+            </template>
+
           </v-select>
         </v-col>
         <!-- #endregion -->
@@ -71,20 +132,37 @@
               </v-date-picker>
           </v-menu>
         </v-col>
+
+        <v-col cols="12">
+          <p class="mb-4 font-weight-black">
+            <v-icon icon="mdi-information" color="blue"></v-icon>
+            預設: 『今天日期』
+          </p>
+
+          <v-btn variant="flat" color="success" @click="search"
+            :loading="hisotry_loading">
+              查詢
+          </v-btn>
+        </v-col>
         <!-- #endregion -->
+
+        
 
         <!-- #region 項目選項圖表內容 -->
         <v-col cols="12">
-          <InspectChart 
-            v-if="!hisotry_loading"
-            :history_inspects="history_inspects"
-          />
-
           <v-skeleton-loader
-            v-else
+            v-if="hisotry_loading"
             class="mx-auto border"
             type="image@4"
           ></v-skeleton-loader>
+          <InspectChart 
+            v-else-if="!hisotry_loading && Object.keys(history_inspects).length > 0"
+            :history_inspects="history_inspects"
+          />
+          <div v-else>
+            查無資料
+          </div>
+
         </v-col>
         <!-- #endregion -->
 
@@ -130,9 +208,12 @@ export default {
     // 初始化
     onMounted( async ()=>{
       hisotry_loading.value = true
-      await getSinglePosition()
-      await getHistoryInspects()
+      await getSinglePosition() // 得到場域資料
 
+      // 預設第一筆
+      selected.value = [position.value['inspects'][0]['id']]
+      await getHistoryInspects()
+      
       swal("目前尚在開發階段", "查詢功能目前無功用", "warning")
     })
 
@@ -166,6 +247,8 @@ export default {
     const date_idx = ref([])
     const date_menu = ref(false)
     const date_text_field = ref("") // 顯示於輸入框
+    const start_date = ref(null);
+    const end_date = ref(null);
 
     // 允許點擊的日期(限今天(含)以前的日期)
     const allowedDates = (val) =>{
@@ -184,38 +267,49 @@ export default {
     const cancelDateIdx = ()=>{
       date_idx.value = null // 值清空
       date_text_field.value = ""
+      start_date.value = null
+      end_date.value = null
     }
 
+
+    
     /* 修改v-date-picker (@update:modelValue) 【在save之後】 */
     const updateDateIdx = (range_date) =>{
-      console.log(range_date);
       if(range_date.length > 0){
-        let start_date = range_date[0]
-        let end_date = range_date.length === 2 ? range_date[1] : range_date[0]
-        start_date = dayjs(start_date).format("YYYY-MM-DD")
-        end_date = dayjs(end_date).format("YYYY-MM-DD")
-        date_text_field.value = `${start_date} ~ ${end_date}`
-
-        getHistoryInspects(start_date, end_date)
+        const start = range_date[0] // 第一個
+        const end = range_date.length === 2 ? range_date[1] : range_date[0] // 如果只給一個就給拿第一個
+        start_date.value = dayjs(start).format("YYYY-MM-DD")
+        end_date.value = dayjs(end).format("YYYY-MM-DD")
+        date_text_field.value = `${start_date.value} ~ ${end_date.value}`
       }
     }
 
 
     const history_inspects = ref([])
     // 得到歷史資料
-    const getHistoryInspects = async (start_date=null, end_date=null)=>{
+    const getHistoryInspects = async ()=>{
+      hisotry_loading.value = true // 載入啟動
       try{
         const params = new URLSearchParams({
-          inspect_id: 2 // 欲檢測數據ID
+          inspect_id: JSON.stringify(selected.value) // 欲檢測數據ID
         })
-        if(start_date && end_date){
-          params.append('start_date', start_date)
-          params.append('end_date', end_date)
+        if(start_date.value && end_date.value){
+          params.append('start_date', start_date.value)
+          params.append('end_date', end_date.value)
         }
         const response = await apiGetHistoryInspects(params)
         if(response.status === 200){
           const response_data = response['data']
-          history_inspects.value = response_data
+          const map_data = {}
+          for(const data of response_data){
+            const { inspect_name } = data
+            if( !map_data.hasOwnProperty(inspect_name) ){
+              map_data[inspect_name] = []
+            }
+            map_data[inspect_name].push(data)
+          }
+
+          history_inspects.value = map_data
         }
       }catch(err){
         console.log(err);
@@ -223,13 +317,17 @@ export default {
       finally{
         hisotry_loading.value = false
       }
-      
+    }
+
+
+    const search = async ()=>{
+      await getHistoryInspects()
     }
 
     return {
       position_id, position, selected, 
       date_idx, date_menu, date_text_field, allowedDates, updateDateIdx, saveDateIdx, cancelDateIdx,
-      history_inspects, hisotry_loading,
+      history_inspects, hisotry_loading, search
     }
   },
 };

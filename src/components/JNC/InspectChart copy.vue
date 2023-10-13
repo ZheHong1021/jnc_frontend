@@ -1,9 +1,8 @@
 <template>
-
   <v-container>
     <v-btn @click="resetZoom" color="primary" variant="tonal">reset zoom</v-btn>
     
-    <div class="chart-container my-4">
+    <div style="width: 100%; min-height: 650px;" >
         <canvas id="chart_id"  ref="chart_ref" ></canvas>
     </div>
   </v-container>
@@ -13,12 +12,10 @@
 
 <script>
 /* 引用 Vue */
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 /* 引用 Chart.js */
 import Chart from 'chart.js/auto';
-import { color as ChartColor } from 'chart.js/helpers';
-
 // import ChartDataLabels from 'chartjs-plugin-datalabels'; // 資料標籤
 import zoomPlugin from 'chartjs-plugin-zoom'; // Zoom: 放大/縮小
 // Chart.register(ChartDataLabels)
@@ -34,24 +31,16 @@ export default {
   name: 'InspectChart',
   props: {
     history_inspects: {
-        type: Object,
-        default: () => ({})
+        type: Array,
+        default: () => []
     },
   },
-
-
   setup(props){
     // 讀取 props資料
-    // const props.history_inspects = props.history_inspects
+    const _history = props.history_inspects
+    // const _history = props.history_inspects.slice(0, 1)
     
     const chart_ref = ref(null) // ref DOM
-
-    watch(() => props.history_inspects, 
-        (newVal, oldVal)=>{
-            UpdateCharts()
-        },
-        { deep: true } // 深度
-    )
 
     // 圖表設定
     const chartOptions = ref({
@@ -189,59 +178,55 @@ export default {
 
                 
             },
+
+            y: { // Y軸(餵食量(g))
+                display: true,
+                position: 'right',
+                title: { 
+                    display: true,
+                    text: '酸鹼度',
+                    font: {
+                        size: 18, // 字型大小
+                        weight: 'bold', // 字體粗體
+                    },
+                },
+                ticks:{
+                    color: 'grey',
+                    font: {
+                        size: '14px', // 字型大小
+                    },
+                },
+            },
             
         } 
     })
     
     // xAxis
     const labels = computed(()=> {
-        let acc_times = []
-        for(const key in props.history_inspects){
-            const times = props.history_inspects[key].map( (item) => item['record_time'] )
-            acc_times = [...acc_times,  ...times]
-        }
-        return [...new Set(acc_times)] // 不重複
-       
+        const times = _history.map( (item) => item['record_time'] )
+        // const times = _history.map( (item) => item['created_at'] )
+        return [...new Set(times)] // 不重複
     })
-
-    const darkColors = [
-        'rgba(55, 66, 250,1.0)',
-        'rgba(255, 71, 87,1.0)',
-        'rgba(46, 213, 115,1.0)',
-        'rgba(255, 127, 80,1.0)',
-        'rgba(243, 104, 224,1.0)',
-    ]
-    const lightColors = [
-        'rgba(55, 66, 250,0.3)',
-        'rgba(255, 71, 87,0.3)',
-        'rgba(46, 213, 115,0.3)',
-        'rgba(255, 127, 80,0.3)',
-        'rgba(243, 104, 224,0.3)',
-    ]
 
     // dataSet
     const datasets = computed(()=> {
         const datasets = []
-        let i = 0
-        for( const key in props.history_inspects ){
-            datasets.push({
-                label: key,
-                type: 'line',
-                order: 1,
-                fill: true,
-                backgroundColor: lightColors[i],
-                borderColor: darkColors[i],
-                data: props.history_inspects[key].map( (item) => ({
-                    x: item['record_time'],
-                    y: item['Value']
-                })),
-                tension: 0.3,
-                pointHoverRadius: 10,
-                yAxisID: `y_${key}`
-            } )
-
-            i += 1 // 紀錄 index
-        }
+        datasets.push({
+            label: `酸鹼度`,
+            type: 'line',
+            order: 1,
+            borderColor: 'rgba(255, 71, 87,1.0)',
+            backgroundColor: 'rgba(255, 71, 87, 0.3)',
+            fill: true,
+            data: _history.map( (item) => ({
+                x: item['record_time'],
+                // x: item['created_at'],
+                y: item['Value']
+            })),
+            tension: 0.3,
+            pointHoverRadius: 10,
+            yAxisID: 'y'
+        } )
         return datasets
     })
 
@@ -257,29 +242,6 @@ export default {
         let options = Object.assign( chartOptions.value, {} )
         options.plugins.title.text = `2801` // 圖表標題
         options.plugins.subtitle.text = '酸鹼度'
-
-
-        /* Y Scale */
-        for(const key in props.history_inspects){
-            options.scales[`y_${key}`] =  { // Y軸(餵食量(g))
-                display: true,
-                position: 'right',
-                title: { 
-                    display: true,
-                    text: key,
-                    font: {
-                        size: 18, // 字型大小
-                        weight: 'bold', // 字體粗體
-                    },
-                },
-                ticks:{
-                    color: 'grey',
-                    font: {
-                        size: '14px', // 字型大小
-                    },
-                },
-            }
-        }
 
         return options
     })
@@ -301,16 +263,6 @@ export default {
         }
     }
 
-
-    const UpdateCharts = () => { // 更新圖表(config、data)
-        const canvas = chart_ref.value
-        const chart = Chart.getChart(canvas)
-        if( chart ){ // 如果有圖表則更新
-            chart.config.data = chartData.value
-            chart.config.options = options.value
-            chart.update()
-        }
-    }
     
     
 
@@ -336,12 +288,5 @@ export default {
 </script>
 
 <style scoped>
-    .chart-container{
-        width: 100%; 
-        min-height: 650px;
-        background-color: rgba(200, 214, 229, 0.1);
-        border: 5px solid rgba(87, 101, 116, 1.0);
-        border-radius: 20px;
-        padding: 0.5rem;
-    }
+
 </style>
