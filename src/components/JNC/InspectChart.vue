@@ -16,16 +16,16 @@ import { computed, onMounted, reactive, ref } from 'vue'
 
 /* 引用 Chart.js */
 import Chart from 'chart.js/auto';
-import ChartDataLabels from 'chartjs-plugin-datalabels'; // 資料標籤
+// import ChartDataLabels from 'chartjs-plugin-datalabels'; // 資料標籤
 import zoomPlugin from 'chartjs-plugin-zoom'; // Zoom: 放大/縮小
-Chart.register(ChartDataLabels)
+// Chart.register(ChartDataLabels)
 Chart.register(zoomPlugin)
 
 import 'chartjs-adapter-date-fns'; // 引入時間處理
 import {zhTW} from 'date-fns/locale'; // import date-fns locale:
 
 // 自定義好用套裝工具
-import {staticLabelUtil, hoverLabelUtil} from '@/utility/Utils.js'
+import {staticLabelUtil, hoverLabelUtil, hoverVerticalLineUtil} from '@/utility/Utils.js'
 
 export default {
   name: 'InspectChart',
@@ -65,17 +65,7 @@ export default {
                 color: '#ED4C67',
                 font: { weight: "bolder", size: 16, },
             },
-            // Change options for ALL labels of THIS CHART(需要安裝 chartjs-plugin-datalabels)
-            datalabels: { // 資料標籤
-                display: 'auto',
-                color: '#000',
-                align: 'end',
-                anchor: 'end',
-                font:{ weight: 'bolder', },
-                formatter: function(value, context) { // 回調函數
-                    return value['y'] // 顯示Y值: {x: ..., y: ...}
-                }
-            },
+            
             tooltip:{ // 提示框
                 padding: 10,
                 titleFont: {
@@ -206,8 +196,6 @@ export default {
                         size: '14px', // 字型大小
                     },
                 },
-                max: 6.65,
-                min: 6.4
             },
             
         } 
@@ -264,8 +252,9 @@ export default {
             data: chartData.value,
             options: options.value,
             plugins: [
-                staticLabelUtil,
-                hoverLabelUtil,
+                // staticLabelUtil,
+                // hoverLabelUtil,
+                hoverVerticalLineUtil,
             ]
         }
         const ctx = chart_ref.value

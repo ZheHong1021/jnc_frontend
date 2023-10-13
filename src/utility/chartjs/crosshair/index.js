@@ -2,6 +2,8 @@ import dayjs from "dayjs";
 /* 綁定在 y軸旁邊 hover時觸發的 text區塊 */
 export const staticLabel = {
     id: 'staticLabel',
+
+    /*  */
     beforeDatasetsDraw(chart, args, plugins){
          const {
             ctx, data,
@@ -57,19 +59,35 @@ export const hoverLabel ={
     id: 'hoverLabel',
     beforeDatasetsDraw(chart, args, plugins){
         const {
-           ctx, canvas,
+           ctx, data,
            chartArea: {top, bottom, left, right, width, height},
            scales: {x, y}
        } = chart
     
         if( xHoverCoor && yHoverCoor ){
+            const _data = data.datasets[0].data
+
             const nearestX = x.getValueForPixel(xHoverCoor)
+            // const nearestXDate = new Date(nearestX).setHours(0, 0, 0, 0)
             const nearestXDate = new Date(nearestX)
+            // const nearestXDate = new Date(_data[hoverIndex]['x'])
+
+            let pillarTichkness = 10
+            let pillarPos = x.getPixelForValue(nearestXDate) - 10
+            if(pillarPos < left){
+                pillarPos = x.getPixelForValue(nearestXDate)
+            }
+
+            if(pillarPos + pillarTichkness > right){
+                pillarPos = x.getPixelForValue(nearestXDate) - pillarTichkness
+            }
+
+
             ctx.save();
             ctx.beginPath()
             ctx.fillStyle = 'rgba(255, 26, 104, 0.2)'
             ctx.fillRect(
-                x.getPixelForValue(nearestXDate), 
+                pillarPos, 
                 top, 
                 10, 
                 height
@@ -97,11 +115,15 @@ export const hoverLabel ={
                 // cloud
                 // 文字寬度 (+20: padding)
                 const textWidth = ctx.measureText('100').width + 20
-        
+                let value = x.getPixelForValue(nearestXDate) - (textWidth / 2)
+                if( value < left ){ value = left}
+                if( value + textWidth > right ){ value = right - (textWidth / 2)}
+
+
                 ctx.beginPath()
                 ctx.fillStyle = 'rgba(255, 26, 104, 1)'
                 ctx.roundRect( 
-                    x.getPixelForValue(nearestXDate) - (textWidth / 2), 
+                    value, 
                     bottom,
                     textWidth,
                     20, 
@@ -110,12 +132,16 @@ export const hoverLabel ={
                 ctx.fill()
         
                 // text
+                let textPos = x.getPixelForValue(nearestXDate)
+                if( textPos <= left ){ textPos = left + (textWidth / 2)}
+                if( textPos >= right + textWidth ){ textPos = right - (textWidth / 2)}
+
                 ctx.font = 'bold 12px sans-serif'
                 ctx.fillStyle = 'white';
                 ctx.textAlign = 'center'
                 ctx.fillText(
                     yyyymmdd, 
-                    x.getPixelForValue(nearestXDate),
+                    textPos,
                     bottom + 10 // padding
                 )
         
