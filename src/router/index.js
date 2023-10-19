@@ -41,6 +41,11 @@ const routes = [
     name: 'Direction',
     component: loadView("Direction"),
   },
+  { // 測試
+    path: '/table',
+    name: 'Table',
+    component: loadView("Table"),
+  },
 
   
 

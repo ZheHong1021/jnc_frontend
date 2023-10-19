@@ -176,10 +176,10 @@ export default {
                 grid: { // 取消格線(圖表中)
                     /* 邊框線 */
                     borderColor: 'rgba(83, 92, 104, 0.7)',
-                    borderWidth: 3,
+                    borderWidth: 1,
 
                     /* 突出線 */
-                    tickWidth: 3, 
+                    tickWidth: 1, 
                     tickColor: 'rgba(83, 92, 104, 0.7)',
                     tickLength: 20,
 
@@ -261,8 +261,12 @@ export default {
 
         /* Y Scale */
         for(const key in props.history_inspects){
+            const value = props.history_inspects[key].map( item => item['Value'] )
+            const max_value = Math.max( ...value ) // 最大值
+            const min_value = Math.min( ...value ) // 最小值
+
             options.scales[`y_${key}`] =  { // Y軸(餵食量(g))
-                display: true,
+                display: false,
                 position: 'right',
                 title: { 
                     display: true,
@@ -278,6 +282,10 @@ export default {
                         size: '14px', // 字型大小
                     },
                 },
+                
+                max: max_value === 0 ? 1 : max_value,
+                min: min_value === 0 ? -1 : min_value
+
             }
         }
 

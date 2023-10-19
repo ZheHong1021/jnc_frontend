@@ -20,7 +20,9 @@
         檢測項目: {{ position['inspect_num']}}
       </p>
 
-      <v-row class="my-4">
+      
+
+      <v-row class="my-4" align="end">
         <!-- #region 項目選項 -->
         <v-col cols="12" sm="6" md="5" lg="4" xl="3">
           <v-select
@@ -30,7 +32,7 @@
             item-title="TagName"
             item-value="id"
             multiple
-            variant="solo-filled"
+            variant="solo-filled" hide-details
             prepend-inner-icon="mdi-fan-auto">
             <!-- Selection Display -->
             <template v-slot:selection="{ item, index }">
@@ -133,20 +135,21 @@
           </v-menu>
         </v-col>
 
-        <v-col cols="12">
-          <p class="mb-4 font-weight-black">
-            <v-icon icon="mdi-information" color="blue"></v-icon>
-            預設: 『今天日期』
-          </p>
+        
+        <!-- #endregion -->
 
+        <!-- #region查詢 -->
+        <v-col cols="12" sm="6" md="5" lg="4" xl="3">
           <v-btn variant="flat" color="success" @click="search"
             :loading="hisotry_loading">
               查詢
           </v-btn>
+          <span class="font-weight-black">
+            <v-icon icon="mdi-information" color="blue"></v-icon>
+            預設: 『今天日期』
+          </span>
         </v-col>
         <!-- #endregion -->
-
-        
 
         <!-- #region 項目選項圖表內容 -->
         <v-col cols="12">
@@ -155,12 +158,16 @@
             class="mx-auto border"
             type="image@4"
           ></v-skeleton-loader>
+
           <InspectChart 
             v-else-if="!hisotry_loading && Object.keys(history_inspects).length > 0"
             :history_inspects="history_inspects"
           />
-          <div v-else>
-            查無資料
+
+          <div v-else class="bg-grey-lighten-3 d-flex flex-column justify-center align-center" style="min-height: 20rem;">
+            <v-icon icon="mdi-magnify-close" size="36" class="my-4"></v-icon>
+            <h6 class="font-weight-black text-subtitle-1 text-md-h6">該日期查無資料</h6>
+            
           </div>
 
         </v-col>

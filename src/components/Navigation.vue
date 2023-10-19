@@ -43,5 +43,6 @@ import { ref } from 'vue'
     { title: '首頁', icon: 'inbox-arrow-down', routeName: 'home' },
     { title: '區域列表', icon: 'office-building-marker', routeName: 'JNCPosition' },
     { title: '測試頁面', icon: 'send', routeName: 'Direction' },
+    // { title: '表格', icon: 'table', routeName: 'Table' },
   ])
 </script>
